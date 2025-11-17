@@ -6,14 +6,12 @@ part of 'session_frame.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$SessionFrameImpl _$$SessionFrameImplFromJson(Map<String, dynamic> json) =>
-    _$SessionFrameImpl(
+_SessionFrame _$SessionFrameFromJson(Map<String, dynamic> json) =>
+    _SessionFrame(
       planes: (json['planes'] as List<dynamic>)
           .map((e) => Plane.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
 
-Map<String, dynamic> _$$SessionFrameImplToJson(_$SessionFrameImpl instance) =>
-    <String, dynamic>{
-      'planes': instance.planes,
-    };
+Map<String, dynamic> _$SessionFrameToJson(_SessionFrame instance) =>
+    <String, dynamic>{'planes': instance.planes};

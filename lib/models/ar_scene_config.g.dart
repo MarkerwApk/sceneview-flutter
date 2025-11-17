@@ -6,8 +6,8 @@ part of 'ar_scene_config.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$ARSceneConfigImpl _$$ARSceneConfigImplFromJson(Map<String, dynamic> json) =>
-    _$ARSceneConfigImpl(
+_ARSceneConfig _$ARSceneConfigFromJson(Map<String, dynamic> json) =>
+    _ARSceneConfig(
       planeFindingEnabled: json['planeFindingEnabled'] as bool? ?? true,
       planeRendererEnabled: json['planeRendererEnabled'] as bool? ?? true,
       depthEnabled: json['depthEnabled'] as bool? ?? true,
@@ -15,19 +15,26 @@ _$ARSceneConfigImpl _$$ARSceneConfigImplFromJson(Map<String, dynamic> json) =>
       augmentedImageDatabaseEnabled:
           json['augmentedImageDatabaseEnabled'] as bool? ?? true,
       augmentedFaceEnabled: json['augmentedFaceEnabled'] as bool? ?? true,
-      lightEstimationMode: $enumDecodeNullable(
-              _$LightEstimationModeEnumMap, json['lightEstimationMode']) ??
+      lightEstimationMode:
+          $enumDecodeNullable(
+            _$LightEstimationModeEnumMap,
+            json['lightEstimationMode'],
+          ) ??
           LightEstimationMode.environmentalHDR,
-      depthMode: $enumDecodeNullable(_$DepthModeEnumMap, json['depthMode']) ??
+      depthMode:
+          $enumDecodeNullable(_$DepthModeEnumMap, json['depthMode']) ??
           DepthMode.automatic,
-      instantPlacementMode: $enumDecodeNullable(
-              _$InstantPlacementModeEnumMap, json['instantPlacementMode']) ??
+      instantPlacementMode:
+          $enumDecodeNullable(
+            _$InstantPlacementModeEnumMap,
+            json['instantPlacementMode'],
+          ) ??
           InstantPlacementMode.localYUp,
       cloudAnchorEnabled: json['cloudAnchorEnabled'] as bool? ?? false,
       geospatialEnabled: json['geospatialEnabled'] as bool? ?? false,
     );
 
-Map<String, dynamic> _$$ARSceneConfigImplToJson(_$ARSceneConfigImpl instance) =>
+Map<String, dynamic> _$ARSceneConfigToJson(_ARSceneConfig instance) =>
     <String, dynamic>{
       'planeFindingEnabled': instance.planeFindingEnabled,
       'planeRendererEnabled': instance.planeRendererEnabled,
