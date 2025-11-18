@@ -51,7 +51,7 @@ class SceneViewWrapper(
         eventHandler = EventHandler(id, messenger)
         gestureHandler = GestureHandler(sceneView, eventHandler)
         nodeHandler = NodeHandler(sceneView!!, activity)
-        methodCallHandler = MethodCallHandler(sceneView, activity, id, messenger, mainScope)
+        methodCallHandler = MethodCallHandler(sceneView, activity, id, messenger, mainScope, nodeHandler)
         augmentedImageHandler = AugmentedImageHandler(
             context,
             sceneView!!,

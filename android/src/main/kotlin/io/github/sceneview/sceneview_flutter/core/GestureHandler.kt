@@ -4,19 +4,16 @@ import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
-import com.google.ar.core.Plane
 import com.google.ar.core.TrackingState
 import dev.romainguy.kotlin.math.Float3
 import dev.romainguy.kotlin.math.Quaternion
 import dev.romainguy.kotlin.math.degrees
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.math.Position
-import io.github.sceneview.sceneview_flutter.models.CustomModelNode as ModelNode
 import io.github.sceneview.node.Node
-import io.github.sceneview.sceneview_flutter.models.FlutterPose
 import io.github.sceneview.sceneview_flutter.utils.Constants
-import kotlinx.coroutines.CoroutineScope
 import kotlin.math.atan2
+import io.github.sceneview.sceneview_flutter.models.CustomModelNode as ModelNode
 
 class GestureHandler(
     private val sceneView: ARSceneView?,
@@ -38,9 +35,14 @@ class GestureHandler(
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
         event?.let { motionEvent ->
             when (motionEvent.actionMasked) {
-                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> handleActionDown(motionEvent)
+                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> handleActionDown(
+                    motionEvent
+                )
+
                 MotionEvent.ACTION_MOVE -> handleActionMove(motionEvent)
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_CANCEL -> handleActionUp(motionEvent)
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_CANCEL -> handleActionUp(
+                    motionEvent
+                )
             }
         }
         return gestureDetector.onTouchEvent(event ?: return false)
@@ -76,6 +78,7 @@ class GestureHandler(
                 lastTouchX = 0f
                 lastTouchY = 0f
             }
+
             1 -> isRotating = false
         }
     }
@@ -108,14 +111,16 @@ class GestureHandler(
                 node.position += Position(deltaX, deltaY, deltaZ)
 
                 Log.d(Constants.TAG, "Dragging node: ${node.name} by ($deltaX, $deltaY, $deltaZ)")
-                eventHandler.sendEvent("onNodeDrag", mapOf(
-                    "nodeId" to node.name,
-                    "position" to mapOf(
-                        "x" to node.worldPosition.x,
-                        "y" to node.worldPosition.y,
-                        "z" to node.worldPosition.z
+                eventHandler.sendEvent(
+                    "onNodeDrag", mapOf(
+                        "nodeId" to node.name,
+                        "position" to mapOf(
+                            "x" to node.worldPosition.x,
+                            "y" to node.worldPosition.y,
+                            "z" to node.worldPosition.z
+                        )
                     )
-                ))
+                )
             }
         }
     }
@@ -131,32 +136,39 @@ class GestureHandler(
             node.quaternion *= rotationDelta
 
             Log.d(Constants.TAG, "Rotating node: ${node.name} by $dampedAngleDiff degrees")
-            eventHandler.sendEvent("onNodeRotate", mapOf(
-                "nodeId" to node.name,
-                "rotation" to mapOf(
-                    "x" to node.worldRotation.x,
-                    "y" to node.worldRotation.y,
-                    "z" to node.worldRotation.z
-                ),
-                "quaternion" to mapOf(
-                    "x" to node.worldQuaternion.x,
-                    "y" to node.worldQuaternion.y,
-                    "z" to node.worldQuaternion.z,
-                    "w" to node.worldQuaternion.w
+            eventHandler.sendEvent(
+                "onNodeRotate", mapOf(
+                    "nodeId" to node.name,
+                    "rotation" to mapOf(
+                        "x" to node.worldRotation.x,
+                        "y" to node.worldRotation.y,
+                        "z" to node.worldRotation.z
+                    ),
+                    "quaternion" to mapOf(
+                        "x" to node.worldQuaternion.x,
+                        "y" to node.worldQuaternion.y,
+                        "z" to node.worldQuaternion.z,
+                        "w" to node.worldQuaternion.w
+                    )
                 )
-            ))
+            )
         }
     }
 
     private fun getTwoFingerAngle(event: MotionEvent): Float {
         val (finger1X, finger1Y) = event.getX(0) to event.getY(0)
         val (finger2X, finger2Y) = event.getX(1) to event.getY(1)
-        return Math.toDegrees(atan2((finger2Y - finger1Y).toDouble(), (finger2X - finger1X).toDouble())).toFloat()
+        return Math.toDegrees(
+            atan2(
+                (finger2Y - finger1Y).toDouble(),
+                (finger2X - finger1X).toDouble()
+            )
+        ).toFloat()
     }
 
     private inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
         override fun onSingleTapUp(e: MotionEvent): Boolean {
-            handleTap(e.x, e.y)
+            handleTap(e)
             return true
         }
 
@@ -166,7 +178,12 @@ class GestureHandler(
             }
         }
 
-        override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
+        override fun onScroll(
+            e1: MotionEvent?,
+            e2: MotionEvent,
+            distanceX: Float,
+            distanceY: Float
+        ): Boolean {
             if (isDragging && !isRotating && selectedNode != null) {
                 handleDrag(e1?.x ?: 0f, e1?.y ?: 0f, e2.x, e2.y)
             }
@@ -175,58 +192,38 @@ class GestureHandler(
     }
 
 
-    private fun handleTap(x: Float, y: Float) {
+    private fun handleTap(e: MotionEvent) {
         sceneView?.let { view ->
             val frame = view.session?.update() ?: return
             if (frame.camera.trackingState != TrackingState.TRACKING) return
 
-            val hits = frame.hitTest(x, y)
+            val hits = view.collisionSystem.hitTest(e)
 
             for (hit in hits) {
-                var nodeDone = false
-                // Check for ModelNode hits
-                val allHits = view.collisionSystem.hitTest(xPx = x, yPx = y)
-
-                for (hit in allHits) {
-                    if (hit.node is ModelNode) {
-                        val hitNode = hit
-                        if (hitNode != null) {
-                            val modelNode = findModelNodeAncestor(hitNode.node)
-                            if (modelNode != null) {
-                                if (modelNode.isTappable) {
-//                                    Log.d(Constants.TAG, "Node tapped: ${modelNode.name}")
-                                    // ModelNode hit, handle it and return
-                                    val worldPosition = modelNode.worldPosition
-                                    eventHandler.sendEvent("onNodeTap", mapOf(
-                                        "nodeId" to modelNode.name,
-                                        "modelPath" to modelNode.modelPath,
-                                        "position" to mapOf(
-                                            "x" to worldPosition.x,
-                                            "y" to worldPosition.y,
-                                            "z" to worldPosition.z
-                                        )
-                                    ))
-                                    nodeDone = true
-                                    return  // Exit after handling the node tap
-                                } else {
-                                    // Continue to the next hit if the node is not tappable
-                                    continue
-                                }
-                            }
+                if (hit.node is ModelNode) {
+                    val hitNode = hit
+                    val modelNode = findModelNodeAncestor(hitNode.node)
+                    if (modelNode != null) {
+                        if (modelNode.isTappable) {
+                            //Log.d(Constants.TAG, "Node tapped: ${modelNode.name}")
+                            // ModelNode hit, handle it and return
+                            val worldPosition = modelNode.worldPosition
+                            eventHandler.sendEvent(
+                                "onNodeTap", mapOf(
+                                    "nodeId" to modelNode.name,
+                                    "modelPath" to modelNode.modelPath,
+                                    "position" to mapOf(
+                                        "x" to worldPosition.x,
+                                        "y" to worldPosition.y,
+                                        "z" to worldPosition.z
+                                    )
+                                )
+                            )
+                            return  // Exit after handling the node tap
+                        } else {
+                            // Continue to the next hit if the node is not tappable
+                            continue
                         }
-                    }
-                }
-
-                if (!nodeDone) {
-                    // If no tappable ModelNode hit, check for Plane hits
-                    if (hit.trackable is Plane) {
-                        val hitPose = hit.hitPose
-                        val hitPlane = hit.trackable as Plane
-                        eventHandler.sendEvent("onPlaneTap", mapOf(
-                            "planeType" to hitPlane.type.ordinal,
-                            "pose" to FlutterPose.fromPose(hitPose).toHashMap()
-                        ))
-                        return  // Exit after handling the plane tap
                     }
                 }
             }
@@ -236,7 +233,8 @@ class GestureHandler(
     private fun handleLongPress(x: Float, y: Float) {
         if (!isRotating) {
             sceneView?.let { view ->
-                val hitNode = view.collisionSystem.hitTest(xPx = x, yPx = y).firstOrNull { it.node is ModelNode }
+                val hitNode = view.collisionSystem.hitTest(xPx = x, yPx = y)
+                    .firstOrNull { it.node is ModelNode }
                 if (hitNode != null) {
                     selectedNode = hitNode.node as ModelNode
                     isDragging = true

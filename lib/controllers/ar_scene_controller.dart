@@ -1,71 +1,64 @@
 import 'dart:async';
+
+import 'package:flutter/services.dart';
 import 'package:sceneview_flutter/controllers/event_handler.dart';
 import 'package:sceneview_flutter/controllers/node_manager.dart';
 import 'package:vector_math/vector_math_64.dart' as vector_math;
-import '../models/ar_hit_test_result.dart';
-import '../models/plane.dart';
-import '../models/plane_tap_event.dart';
-import '../models/node_tap_event.dart';
-import '../models/augmented_image.dart';
+
 import '../enums/plane_type.dart';
 import '../enums/tracking_failure_reason.dart';
+import '../models/ar_hit_test_result.dart';
+import '../models/augmented_image.dart';
+import '../models/node_tap_event.dart';
+import '../models/plane.dart';
+import '../models/plane_tap_event.dart';
 import '../models/scene_node.dart';
 import '../utils/channel_manager.dart';
 
 class ARSceneController {
+  static const utilsChannelName = "sceneview_flutter";
+
   final int id;
   late final ChannelManager _channelManager;
   late final EventHandler _eventHandler;
   late final NodeManager _nodeManager;
   bool _isInitialized = false;
 
-  final StreamController<List<Plane>> planesController =
-      StreamController<List<Plane>>.broadcast();
-  final StreamController<PlaneTapEvent> planeTapController =
-      StreamController<PlaneTapEvent>.broadcast();
-  final StreamController<NodeTapEvent> nodeTapController =
-      StreamController<NodeTapEvent>.broadcast();
+  final StreamController<List<Plane>> planesController = StreamController<List<Plane>>.broadcast();
+  final StreamController<PlaneTapEvent> planeTapController = StreamController<PlaneTapEvent>.broadcast();
+  final StreamController<NodeTapEvent> nodeTapController = StreamController<NodeTapEvent>.broadcast();
   final StreamController<TrackingFailureReason> trackingFailureController =
       StreamController<TrackingFailureReason>.broadcast();
   final StreamController<List<AugmentedImage>> augmentedImagesController =
       StreamController<List<AugmentedImage>>.broadcast();
 
   Stream<List<Plane>> get planesStream => planesController.stream;
+
   Stream<PlaneTapEvent> get planeTapStream => planeTapController.stream;
+
   Stream<NodeTapEvent> get nodeTapStream => nodeTapController.stream;
-  Stream<TrackingFailureReason> get trackingFailureStream =>
-      trackingFailureController.stream;
-  Stream<List<AugmentedImage>> get augmentedImagesStream =>
-      augmentedImagesController.stream;
+
+  Stream<TrackingFailureReason> get trackingFailureStream => trackingFailureController.stream;
+
+  Stream<List<AugmentedImage>> get augmentedImagesStream => augmentedImagesController.stream;
 
   ARSceneController(this.id) {
     _channelManager = ChannelManager(id);
     _eventHandler = EventHandler(_channelManager, this);
     _nodeManager = NodeManager(_channelManager);
   }
+
+  static Future<bool> checkArCoreAvailability() async {
+    final bool arcoreAvailable = await MethodChannel(utilsChannelName).invokeMethod('checkArCoreApkAvailability');
+    return arcoreAvailable;
+  }
+
   Future<void> addNode(SceneNode node) async {
-    final nodeData = {
-      'type': 'reference',
-      'id': node.id,
-      'position': {
-        'x': node.position.x,
-        'y': node.position.y,
-        'z': node.position.z,
-      },
-      'rotation': {
-        'x': node.rotation.x,
-        'y': node.rotation.y,
-        'z': node.rotation.z,
-        'w': node.rotation.w,
-      },
-      'scale': {
-        'x': node.scale.x,
-        'y': node.scale.y,
-        'z': node.scale.z,
-      },
-      'fileLocation': node.fileLocation,
-    };
-    await _channelManager.invokeMethod('addNode', nodeData);
+    await _nodeManager.addNode(node);
+  }
+
+  Future<void> removeNode(String nodeId) async {
+    await _nodeManager.removeNode(nodeId);
   }
 
   Future<void> initialize() async {
@@ -84,12 +77,8 @@ class ARSceneController {
     }
   }
 
-  Future<vector_math.Vector3?> getAugmentedImagePosition(
-      String imageName) async {
-    final result =
-        await _channelManager.invokeMethod('getAugmentedImagePosition', {
-      'imageName': imageName,
-    });
+  Future<vector_math.Vector3?> getAugmentedImagePosition(String imageName) async {
+    final result = await _channelManager.invokeMethod('getAugmentedImagePosition', {'imageName': imageName});
     if (result != null) {
       return vector_math.Vector3(result['x'], result['y'], result['z']);
     }
@@ -104,10 +93,7 @@ class ARSceneController {
 
   Future<ARHitTestResult?> performHitTest(double x, double y) async {
     print("Performing hit test at ($x, $y)");
-    final result = await _channelManager.invokeMethod('performHitTest', {
-      'x': x,
-      'y': y,
-    });
+    final result = await _channelManager.invokeMethod('performHitTest', {'x': x, 'y': y});
     if (result != null) {
       return ARHitTestResult(
         position: vector_math.Vector3(result['x'], result['y'], result['z']),
@@ -119,14 +105,12 @@ class ARSceneController {
 
   Future<void> setPlaneDetectionEnabled(bool enabled) async {
     print("Setting plane detection enabled: $enabled");
-    await _channelManager
-        .invokeMethod('setPlaneDetectionEnabled', {'enabled': enabled});
+    await _channelManager.invokeMethod('setPlaneDetectionEnabled', {'enabled': enabled});
   }
 
   Future<void> setLightEstimationEnabled(bool enabled) async {
     print("Setting light estimation enabled: $enabled");
-    await _channelManager
-        .invokeMethod('setLightEstimationEnabled', {'enabled': enabled});
+    await _channelManager.invokeMethod('setLightEstimationEnabled', {'enabled': enabled});
   }
 
   Future<void> dispose() async {

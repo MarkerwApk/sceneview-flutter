@@ -1,5 +1,6 @@
 // lib/models/plane.dart
 import 'package:freezed_annotation/freezed_annotation.dart';
+
 import '../enums/plane_type.dart';
 import 'pose.dart';
 
@@ -7,7 +8,7 @@ part 'plane.freezed.dart';
 part 'plane.g.dart';
 
 @freezed
-class Plane with _$Plane {
+abstract class Plane with _$Plane {
   const factory Plane({
     String? id,
     required PlaneType type,

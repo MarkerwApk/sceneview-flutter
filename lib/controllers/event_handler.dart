@@ -1,12 +1,13 @@
 import 'package:vector_math/vector_math_64.dart' as vector_math;
-import '../models/plane.dart';
-import '../models/plane_tap_event.dart';
-import '../models/node_tap_event.dart';
-import '../models/scene_node.dart';
-import '../models/pose.dart';
-import '../models/augmented_image.dart';
+
 import '../enums/plane_type.dart';
 import '../enums/tracking_failure_reason.dart';
+import '../models/augmented_image.dart';
+import '../models/node_tap_event.dart';
+import '../models/plane.dart';
+import '../models/plane_tap_event.dart';
+import '../models/pose.dart';
+import '../models/scene_node.dart';
 import '../utils/channel_manager.dart';
 import '../utils/vector_converter.dart';
 import 'ar_scene_controller.dart';
@@ -37,7 +38,7 @@ class EventHandler {
   }
 
   void handleEvent(String eventName, dynamic data) {
-    // print("Handling event: $eventName with data: $data");
+    print("Handling event: $eventName with data: $data");
     switch (eventName) {
       case 'onSessionUpdated':
         if (data is Map) {
@@ -96,12 +97,10 @@ class EventHandler {
       final e = entry.value;
 
       final planeData = Map<String, dynamic>.from(e as Map);
-      final centerPoseData =
-          Map<String, dynamic>.from(planeData['centerPose'] as Map);
+      final centerPoseData = Map<String, dynamic>.from(planeData['centerPose'] as Map);
 
       final centerPose = Pose(
-        translation: vector3FromList(
-            (centerPoseData['translation'] as List).cast<double>()),
+        translation: vector3FromList((centerPoseData['translation'] as List).cast<double>()),
         rotation: vector_math.Quaternion(
           (centerPoseData['rotation'] as List)[0] as double,
           (centerPoseData['rotation'] as List)[1] as double,
@@ -110,13 +109,9 @@ class EventHandler {
         ),
       );
 
-      final plane = Plane(
-        type: PlaneType.values[planeData['type'] as int],
-        centerPose: centerPose,
-      );
+      final plane = Plane(type: PlaneType.values[planeData['type'] as int], centerPose: centerPose);
 
-      return plane.copyWith(
-          id: 'plane_${DateTime.now().millisecondsSinceEpoch}_${index}_${plane.type}');
+      return plane.copyWith(id: 'plane_${DateTime.now().millisecondsSinceEpoch}_${index}_${plane.type}');
     }).toList();
 
     _controller.planesController.add(planes);
@@ -146,12 +141,7 @@ class EventHandler {
         type: planeType,
         centerPose: Pose(
           translation: vector3FromList(translation),
-          rotation: vector_math.Quaternion(
-            rotation[0],
-            rotation[1],
-            rotation[2],
-            rotation[3],
-          ),
+          rotation: vector_math.Quaternion(rotation[0], rotation[1], rotation[2], rotation[3]),
         ),
       );
 
@@ -166,8 +156,7 @@ class EventHandler {
   void _handleNodeTapped(Map data) {
     final nodeId = data['nodeId'] as String;
 
-    final position = const Vector3MapConverter()
-        .fromJson(data['position'] as Map<dynamic, dynamic>);
+    final position = const Vector3MapConverter().fromJson(data['position'] as Map<dynamic, dynamic>);
 
     final rotation = data.containsKey('rotation')
         ? const QuaternionMapConverter().fromJson(data['rotation'])
@@ -193,11 +182,7 @@ class EventHandler {
     final imageName = data['imageName'] as String;
     final isTracking = data['isTracking'] as bool;
 
-    final updatedImage = AugmentedImage(
-      name: imageName,
-      assetLocation: '',
-      isTracking: isTracking,
-    );
+    final updatedImage = AugmentedImage(name: imageName, assetLocation: '', isTracking: isTracking);
 
     _controller.augmentedImagesController.add([updatedImage]);
   }
@@ -209,9 +194,7 @@ class EventHandler {
   }
 
   void _handleAugmentedImagesChanged(Map data) {
-    final List<AugmentedImage> images = (data['images'] as List)
-        .map((e) => AugmentedImage.fromJson(e))
-        .toList();
+    final List<AugmentedImage> images = (data['images'] as List).map((e) => AugmentedImage.fromJson(e)).toList();
     print("Augmented images changed: ${images.length} images");
     _controller.augmentedImagesController.add(images);
   }

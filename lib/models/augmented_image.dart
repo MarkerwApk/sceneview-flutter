@@ -6,7 +6,7 @@ part 'augmented_image.freezed.dart';
 part 'augmented_image.g.dart';
 
 @freezed
-class AugmentedImage with _$AugmentedImage {
+abstract class AugmentedImage with _$AugmentedImage {
   const factory AugmentedImage({
     required String name,
     required String assetLocation,
@@ -14,6 +14,5 @@ class AugmentedImage with _$AugmentedImage {
     @Default(false) bool isTracking,
   }) = _AugmentedImage;
 
-  factory AugmentedImage.fromJson(Map<String, dynamic> json) =>
-      _$AugmentedImageFromJson(json);
+  factory AugmentedImage.fromJson(Map<String, dynamic> json) => _$AugmentedImageFromJson(json);
 }

@@ -9,9 +9,12 @@ import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import android.app.Activity
+import android.os.Handler
+import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import android.util.Log // Change this import
+import com.google.ar.core.ArCoreApk
 
 class SceneviewFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private lateinit var channel: MethodChannel
@@ -39,10 +42,27 @@ class SceneviewFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             "getPlatformVersion" -> {
                 result.success("Android ${android.os.Build.VERSION.RELEASE}")
             }
+            "checkArCoreApkAvailability" -> {
+                maybeEnableAr { available ->
+                    result.success(available)
+                }
+            }
             else -> {
                 result.notImplemented()
             }
         }
+    }
+
+    private fun maybeEnableAr(handler: (Boolean) -> Unit) {
+        val availability: ArCoreApk.Availability = ArCoreApk.getInstance().checkAvailability(activity)
+        if (availability.isTransient) {
+            // Re-query at 5Hz while compatibility is checked in the background.
+            Handler(Looper.getMainLooper()).postDelayed({
+                maybeEnableAr {
+                    handler(it)
+                }
+            }, 200)
+        } else handler(availability.isSupported)
     }
 
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {

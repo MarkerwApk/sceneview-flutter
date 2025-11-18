@@ -24,8 +24,9 @@ data class FlutterReferenceNode(
             val positionMap = map["position"] as Map<String, Double>
             val rotationMap = map["rotation"] as Map<String, Double>
             val scaleMap = map["scale"] as Map<String, Double>
-            val positionRelativeToImageMap = map["positionRelativeToImage"] as Map<String, Double>
-            val isTappable = map["isTappable"] as Boolean
+            val positionRelativeToImageMap = map["positionRelativeToImage"] as Map<String, Double>?
+                ?: mapOf("x" to 0.0, "y" to 0.0, "z" to 0.0)
+            val isTappable = map["isTappable"] as Boolean? ?: true
             val node = FlutterReferenceNode(
                 id = map["id"] as String,
                 position = floatArrayOf(

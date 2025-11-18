@@ -1,14 +1,17 @@
 // lib/models/pose.dart
 
+import 'dart:math' as math;
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:vector_math/vector_math_64.dart';
+
 import '../utils/vector_converter.dart';
-import 'dart:math' as math;
+
 part 'pose.freezed.dart';
 part 'pose.g.dart';
 
 @freezed
-class Pose with _$Pose {
+abstract class Pose with _$Pose {
   const factory Pose({
     @Vector3Converter() required Vector3 translation,
     @QuaternionConverter() required Quaternion rotation,
@@ -18,8 +21,7 @@ class Pose with _$Pose {
 
   const Pose._();
 
-  Matrix4 get matrix =>
-      Matrix4.compose(translation, rotation, Vector3.all(1.0));
+  Matrix4 get matrix => Matrix4.compose(translation, rotation, Vector3.all(1.0));
 
   Pose applyTransform(Matrix4 transform) {
     final newMatrix = transform * matrix;
@@ -39,11 +41,7 @@ class Pose with _$Pose {
 
   // Helper method for Vector3 linear interpolation
   static Vector3 _lerpVector3(Vector3 a, Vector3 b, double t) {
-    return Vector3(
-      _lerpDouble(a.x, b.x, t),
-      _lerpDouble(a.y, b.y, t),
-      _lerpDouble(a.z, b.z, t),
-    );
+    return Vector3(_lerpDouble(a.x, b.x, t), _lerpDouble(a.y, b.y, t), _lerpDouble(a.z, b.z, t));
   }
 
   // Helper method for double linear interpolation
@@ -78,11 +76,6 @@ class Pose with _$Pose {
     double s0 = math.cos(theta) - dot * sinTheta / sinTheta0;
     double s1 = sinTheta / sinTheta0;
 
-    return Quaternion(
-      a.x * s0 + b.x * s1,
-      a.y * s0 + b.y * s1,
-      a.z * s0 + b.z * s1,
-      a.w * s0 + b.w * s1,
-    );
+    return Quaternion(a.x * s0 + b.x * s1, a.y * s0 + b.y * s1, a.z * s0 + b.z * s1, a.w * s0 + b.w * s1);
   }
 }
